@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#174b38">
+  <meta name="description" content="Torro Bah Village Development Committee management and records app">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <title>Torro Bah VDC</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brandmark">TB</div>
+    <div class="brandtext"><strong>TORRO BAH VDC</strong><span>Management & Records</span></div>
+    <button id="installBtn" class="small-btn" hidden>Install</button>
+  </header>
+
+  <main class="shell">
+    <section class="welcome">
+      <p class="eyebrow">VILLAGE DEVELOPMENT COMMITTEE</p>
+      <h1>Management Dashboard</h1>
+      <p class="muted">A shared institutional workspace for administration, finance and community development.</p>
+      <div class="notice"><strong>Prototype notice:</strong> This first version stores records on this device only. Do not enter sensitive personal or financial information until secure accounts, permissions and backups are implemented.</div>
+    </section>
+
+    <section class="stats" aria-label="Record summary">
+      <div class="stat"><span id="recordCount">0</span><small>Saved records</small></div>
+      <div class="stat"><span id="draftCount">0</span><small>Drafts</small></div>
+      <div class="stat"><span id="roleCount">9</span><small>Officer workspaces</small></div>
+    </section>
+
+    <nav class="tabs" aria-label="Main sections">
+      <button class="tab active" data-tab="workspace">Officer toolkit</button>
+      <button class="tab" data-tab="records">Saved records</button>
+      <button class="tab" data-tab="about">About & backup</button>
+    </nav>
+
+    <section id="workspace" class="panel active">
+      <div class="section-heading"><div><p class="eyebrow">RECORDING TEMPLATES</p><h2>Officer workspace</h2></div></div>
+      <label for="roleSelect">Choose an executive role</label>
+      <select id="roleSelect"></select>
+      <label for="templateSelect">Choose a recording template</label>
+      <select id="templateSelect"></select>
+      <div id="templateDescription" class="hint"></div>
+      <form id="recordForm" class="record-form">
+        <div id="formFields" class="form-grid"></div>
+        <div class="form-actions">
+          <button type="button" id="saveDraftBtn" class="secondary">Save draft</button>
+          <button type="submit" class="primary">Save record</button>
+        </div>
+        <p class="hint">Use “Print / Save PDF” after saving to create a printable copy. Browser print options may vary by phone.</p>
+      </form>
+    </section>
+
+    <section id="records" class="panel">
+      <div class="section-heading"><div><p class="eyebrow">INSTITUTIONAL RECORDS</p><h2>Saved records</h2></div></div>
+      <input id="searchRecords" type="search" placeholder="Search title, officer or reference">
+      <div id="recordsList" class="records-list"></div>
+    </section>
+
+    <section id="about" class="panel">
+      <p class="eyebrow">PROJECT INFORMATION</p>
+      <h2>About this prototype</h2>
+      <p>This is the first phone-friendly prototype for the Torro Bah VDC Management System. It demonstrates officer-specific digital templates and printable records.</p>
+      <h3>Included workspaces</h3>
+      <ul>
+        <li>Chairperson and Vice Chairperson</li>
+        <li>Secretary General and Assistant Secretary</li>
+        <li>Treasurer and Auditor</li>
+        <li>Project Officer and Procurement Officer</li>
+        <li>Mobilisation Officer and Welfare Officer</li>
+        <li>PRO and Assistant PRO</li>
+      </ul>
+      <h3>Backup and portability</h3>
+      <p>Export a JSON backup to keep a copy of records. Import it on this device or another compatible copy of the app. This is not encrypted storage.</p>
+      <div class="button-row">
+        <button id="exportBtn" class="primary">Export records backup</button>
+        <label class="file-button secondary">Import backup<input id="importFile" type="file" accept="application/json"></label>
+      </div>
+      <div class="notice warning"><strong>Not production-ready for confidential use.</strong> This prototype has no individual login, server backup, multi-user synchronisation, role-based security or legally validated approval workflow. Those are required before operational deployment.</div>
+      <h3>Governance safeguard</h3>
+      <p>The app is an administrative tool. It does not itself approve spending, change committee decisions, authorise land transactions or replace community consultation and legally required permissions.</p>
+    </section>
+
+    <footer> T B V D C <span>•</span> Version 1.0 prototype</footer>
+  </main>
+
+  <dialog id="recordDialog">
+    <div class="dialog-head"><h2 id="dialogTitle">Record</h2><button id="closeDialog" class="icon-btn" aria-label="Close">×</button></div>
+    <div id="dialogBody"></div>
+    <div class="button-row">
+      <button id="printRecordBtn" class="primary">Print / Save PDF</button>
+      <button id="deleteRecordBtn" class="danger">Delete record</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
