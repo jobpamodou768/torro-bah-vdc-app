@@ -1,0 +1,10 @@
+{
+  "name": "Torro Bah VDC Management System",
+  "short_name": "Torro Bah VDC",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f6f3",
+  "theme_color": "#174b38",
+  "description": "Management and recording toolkit for Torro Bah Village Development Committee",
+  "icons": []
+}
