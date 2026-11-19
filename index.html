@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#174b38">
-  <meta name="description" content="Torro Bah Village Development Committee management and records app">
+  <meta name="description" content="Village Development Committee management and records platform">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <title>Torro Bah VDC</title>
@@ -12,7 +12,10 @@
 <body>
   <header class="topbar">
     <div class="brandmark">TB</div>
-    <div class="brandtext"><strong>TORRO BAH VDC</strong><span>Management & Records</span></div>
+    <div class="brandtext">
+      <strong>VDC MANAGEMENT SYSTEM</strong>
+      <span>Administration & Records</span>
+    </div>
     <button id="installBtn" class="small-btn" hidden>Install</button>
   </header>
 
@@ -20,24 +23,81 @@
     <section class="welcome">
       <p class="eyebrow">VILLAGE DEVELOPMENT COMMITTEE</p>
       <h1>Management Dashboard</h1>
-      <p class="muted">A shared institutional workspace for administration, finance and community development.</p>
-      <div class="notice"><strong>Prototype notice:</strong> This first version stores records on this device only. Do not enter sensitive personal or financial information until secure accounts, permissions and backups are implemented.</div>
+      <p class="muted">A shared platform for VDC administration, finance and community development.</p>
+      <div class="notice">
+        <strong>Prototype notice:</strong> Records are currently stored on this device only. Do not enter sensitive personal or financial information until secure accounts, permissions and backups are implemented.
+      </div>
     </section>
 
     <section class="stats" aria-label="Record summary">
       <div class="stat"><span id="recordCount">0</span><small>Saved records</small></div>
       <div class="stat"><span id="draftCount">0</span><small>Drafts</small></div>
-      <div class="stat"><span id="roleCount">9</span><small>Officer workspaces</small></div>
+      <div class="stat"><span id="roleCount">12</span><small>Officer workspaces</small></div>
     </section>
 
     <nav class="tabs" aria-label="Main sections">
-      <button class="tab active" data-tab="workspace">Officer toolkit</button>
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="workspace">Officer toolkit</button>
       <button class="tab" data-tab="records">Saved records</button>
       <button class="tab" data-tab="about">About & backup</button>
     </nav>
 
-    <section id="workspace" class="panel active">
-      <div class="section-heading"><div><p class="eyebrow">RECORDING TEMPLATES</p><h2>Officer workspace</h2></div></div>
+    <section id="dashboard" class="panel active">
+      <div class="dashboard-identity">
+        <div>
+          <p class="eyebrow">CURRENT VDC</p>
+          <h2>Torro Bah VDC</h2>
+          <p class="muted">Lower Baddib District • North Bank Region</p>
+        </div>
+        <span class="identity-mark">TB</span>
+      </div>
+
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">QUICK ACCESS</p>
+          <h2>What would you like to do?</h2>
+        </div>
+      </div>
+
+      <div class="quick-grid">
+        <button class="quick-card" data-go="workspace">
+          <span class="quick-icon">＋</span>
+          <strong>Create a record</strong>
+          <small>Open officer templates</small>
+        </button>
+        <button class="quick-card" data-go="records">
+          <span class="quick-icon">▤</span>
+          <strong>View saved records</strong>
+          <small>Search and open records</small>
+        </button>
+        <button class="quick-card" data-go="about">
+          <span class="quick-icon">⇧</span>
+          <strong>Backup & information</strong>
+          <small>Export or import records</small>
+        </button>
+      </div>
+
+      <div class="section-heading roadmap-heading">
+        <div>
+          <p class="eyebrow">SYSTEM DEVELOPMENT</p>
+          <h2>Modules planned next</h2>
+        </div>
+      </div>
+
+      <div class="module-list">
+        <div><strong>Membership & officers</strong><span>Planned</span></div>
+        <div><strong>Finance & bank accounts</strong><span>Planned</span></div>
+        <div><strong>Projects & procurement</strong><span>Planned</span></div>
+        <div><strong>Documents, approvals & reports</strong><span>Planned</span></div>
+      </div>
+
+      <p class="hint">These modules will be activated as they are developed and connected to secure accounts and the database.</p>
+    </section>
+
+    <section id="workspace" class="panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">RECORDING TEMPLATES</p><h2>Officer workspace</h2></div>
+      </div>
       <label for="roleSelect">Choose an executive role</label>
       <select id="roleSelect"></select>
       <label for="templateSelect">Choose a recording template</label>
@@ -49,12 +109,14 @@
           <button type="button" id="saveDraftBtn" class="secondary">Save draft</button>
           <button type="submit" class="primary">Save record</button>
         </div>
-        <p class="hint">Use “Print / Save PDF” after saving to create a printable copy. Browser print options may vary by phone.</p>
+        <p class="hint">Use “Print / Save PDF” after saving to create a printable copy.</p>
       </form>
     </section>
 
     <section id="records" class="panel">
-      <div class="section-heading"><div><p class="eyebrow">INSTITUTIONAL RECORDS</p><h2>Saved records</h2></div></div>
+      <div class="section-heading">
+        <div><p class="eyebrow">INSTITUTIONAL RECORDS</p><h2>Saved records</h2></div>
+      </div>
       <input id="searchRecords" type="search" placeholder="Search title, officer or reference">
       <div id="recordsList" class="records-list"></div>
     </section>
@@ -62,7 +124,8 @@
     <section id="about" class="panel">
       <p class="eyebrow">PROJECT INFORMATION</p>
       <h2>About this prototype</h2>
-      <p>This is the first phone-friendly prototype for the Torro Bah VDC Management System. It demonstrates officer-specific digital templates and printable records.</p>
+      <p>This is the first phone-friendly prototype for the VDC Management System. It demonstrates officer-specific digital templates and printable records.</p>
+
       <h3>Included workspaces</h3>
       <ul>
         <li>Chairperson and Vice Chairperson</li>
@@ -72,22 +135,31 @@
         <li>Mobilisation Officer and Welfare Officer</li>
         <li>PRO and Assistant PRO</li>
       </ul>
+
       <h3>Backup and portability</h3>
-      <p>Export a JSON backup to keep a copy of records. Import it on this device or another compatible copy of the app. This is not encrypted storage.</p>
+      <p>Export a JSON backup to keep a copy of records. This is not encrypted storage.</p>
       <div class="button-row">
         <button id="exportBtn" class="primary">Export records backup</button>
         <label class="file-button secondary">Import backup<input id="importFile" type="file" accept="application/json"></label>
       </div>
-      <div class="notice warning"><strong>Not production-ready for confidential use.</strong> This prototype has no individual login, server backup, multi-user synchronisation, role-based security or legally validated approval workflow. Those are required before operational deployment.</div>
+
+      <div class="notice warning">
+        <strong>Not production-ready for confidential use.</strong>
+        This prototype has no individual login, server backup, multi-user synchronisation or role-based security.
+      </div>
+
       <h3>Governance safeguard</h3>
-      <p>The app is an administrative tool. It does not itself approve spending, change committee decisions, authorise land transactions or replace community consultation and legally required permissions.</p>
+      <p>The app is an administrative tool. It does not itself approve spending, change committee decisions or replace community consultation and legally required permissions.</p>
     </section>
 
-    <footer> T B V D C <span>•</span> Version 1.0 prototype</footer>
+    <footer>VDC MANAGEMENT SYSTEM <span>•</span> Version 1.1 prototype</footer>
   </main>
 
   <dialog id="recordDialog">
-    <div class="dialog-head"><h2 id="dialogTitle">Record</h2><button id="closeDialog" class="icon-btn" aria-label="Close">×</button></div>
+    <div class="dialog-head">
+      <h2 id="dialogTitle">Record</h2>
+      <button id="closeDialog" class="icon-btn" aria-label="Close">×</button>
+    </div>
     <div id="dialogBody"></div>
     <div class="button-row">
       <button id="printRecordBtn" class="primary">Print / Save PDF</button>
@@ -98,4 +170,4 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
 </body>
-</html>
+          </html>
