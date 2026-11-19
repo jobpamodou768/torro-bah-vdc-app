@@ -1,3 +1,14 @@
+// SUPABASE CONFIGURATION
+const SUPABASE_URL = "https://epijlomphuouyrucwcqg.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Axa7ZzaQ_aRbmUV_C-uVBA_YyzG-Jv4";
+
+// INITIALISE SUPABASE CLIENT
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+ 
+);
 const $ = s => document.querySelector(s);
 const STORAGE_KEY = "torroBahVdcRecordsV1";
 
