@@ -129,8 +129,10 @@ function importBackup(file){
  };reader.readAsText(file);
 }
 function switchTab(tab){
- document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.go)));
+ document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+ document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id===tab));
 }
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.go)));
 $("#roleSelect").addEventListener("change",populateTemplates);
 $("#templateSelect").addEventListener("change",renderFields);
 $("#recordForm").addEventListener("submit",e=>{e.preventDefault();save("Submitted")});
