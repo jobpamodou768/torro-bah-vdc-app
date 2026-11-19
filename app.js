@@ -132,7 +132,7 @@ function switchTab(tab){
  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id===tab));
 }
-document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.go)));
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>document.querySelector(`.tab[data-tab="${b.dataset.go}"]`)?.click()));
 $("#roleSelect").addEventListener("change",populateTemplates);
 $("#templateSelect").addEventListener("change",renderFields);
 $("#recordForm").addEventListener("submit",e=>{e.preventDefault();save("Submitted")});
