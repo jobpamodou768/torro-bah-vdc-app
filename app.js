@@ -56,7 +56,7 @@ let deferredInstall = null;
 
 function loadRecords(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch{return []}}
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(records));updateCounts()}
-function updateCounts(){$("#recordCount").textContent=records.length;$("#draftCount").textContent=records.filter(r=>r.status==="Draft").length}
+function updateCounts(){$("#recordCount").textContent=records.length;$("#draftCount").textContent=records.filter(r=>r.status==="Draft").length;$("#roleCount").textContent=templates.length}
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2400)}
 function today(){return new Date().toISOString().slice(0,10)}
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
