@@ -166,3 +166,94 @@ window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredIns
 $("#installBtn").addEventListener("click",async()=>{if(!deferredInstall)return;deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;$("#installBtn").hidden=true});
 populateRoles();updateCounts();renderRecords();
 if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+
+// SUPABASE LOGIN AND ACCOUNT ACCESS
+function showLoginMessage(message) {
+  $("#loginMessage").textContent = message;
+}
+
+async function openUserAccount(user) {
+  const { data: account, error } = await supabaseClient
+    .from("user_accounts")
+    .select("account_status")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    showLoginMessage("Could not verify your account. Please try again.");
+    $("#signOutBtn").hidden = false;
+    return;
+  }
+
+  if (!account) {
+    showLoginMessage("No VDC account is linked to this login. Contact the administrator.");
+    $("#signOutBtn").hidden = false;
+    return;
+  }
+
+  if (account.account_status !== "active") {
+    showLoginMessage("Your account is awaiting approval or is not active. Please contact the VDC administrator.");
+    $("#signOutBtn").hidden = false;
+    return;
+  }
+
+  STORAGE_KEY = STORAGE_KEY_BASE + "_" + user.id;
+  records = loadRecords();
+  updateCounts();
+  renderRecords();
+
+  $("#loginScreen").hidden = true;
+  $("#appShell").hidden = false;
+  $("#signOutBtn").hidden = false;
+}
+
+$("#loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const email = $("#loginEmail").value.trim();
+  const password = $("#loginPassword").value;
+
+  showLoginMessage("Signing in...");
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    showLoginMessage("Sign-in failed. Check your email and password.");
+    return;
+  }
+
+  await openUserAccount(data.user);
+});
+
+$("#signOutBtn").addEventListener("click", async () => {
+  const { error } = await supabaseClient.auth.signOut();
+
+  if (error) {
+    showLoginMessage("Sign out failed. Please try again.");
+    return;
+  }
+
+  records = [];
+  $("#appShell").hidden = true;
+  $("#loginScreen").hidden = false;
+  $("#signOutBtn").hidden = true;
+  $("#loginForm").reset();
+  showLoginMessage("You have signed out.");
+});
+
+async function restoreLoginSession() {
+  const { data, error } = await supabaseClient.auth.getSession();
+
+  if (error) {
+    showLoginMessage("Could not check your login session.");
+    return;
+  }
+
+  if (data.session) {
+    await openUserAccount(data.session.user);
+  }
+}
+
+restoreLoginSession();
