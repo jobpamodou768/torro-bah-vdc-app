@@ -220,8 +220,8 @@ $("#loginForm").addEventListener("submit", async event => {
   });
 
   if (error) {
-    showLoginMessage("Sign-in failed. Check your email and password.");
-    return;
+  showLoginMessage("Reset error: " + error.message);
+  return;
   }
 
   await openUserAccount(data.user);
