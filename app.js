@@ -10,7 +10,8 @@ const supabaseClient = window.supabase.createClient(
  
 );
 const $ = s => document.querySelector(s);
-const STORAGE_KEY = "torroBahVdcRecordsV1";
+const STORAGE_KEY_BASE = "torroBahVdcRecordsV1";
+let STORAGE_KEY = STORAGE_KEY_BASE;
 
 const templates = [
  {role:"Chairperson", items:[
