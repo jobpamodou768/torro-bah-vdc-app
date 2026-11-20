@@ -62,7 +62,7 @@ const commonFields = [
  ["relatedDocuments","Supporting documents / receipt references","text",false],
  ["status","Record status","select",true]
 ];
-let records = loadRecords();
+let records = [];
 let currentRecordId = null;
 let deferredInstall = null;
 
