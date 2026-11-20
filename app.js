@@ -254,7 +254,13 @@ async function restoreLoginSession() {
   if (data.session) {
     await openUserAccount(data.session.user);
   }
-}
+}supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    $("#loginScreen").hidden = true;
+    $("#appShell").hidden = true;
+    $("#resetPasswordScreen").hidden = false;
+  }
+});
 
 restoreLoginSession();
 
@@ -281,4 +287,35 @@ $("#forgotPasswordLink").addEventListener("click", async event => {
   }
 
   showLoginMessage("Password reset instructions have been sent to your email.");
+});
+$("#resetPasswordForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const password = $("#newPassword").value;
+  const confirmPassword = $("#confirmNewPassword").value;
+
+  if (password !== confirmPassword) {
+    $("#resetPasswordMessage").textContent = "Passwords do not match.";
+    return;
+  }
+
+  $("#resetPasswordMessage").textContent = "Updating password...";
+
+  const { error } = await supabaseClient.auth.updateUser({
+    password: password
+  });
+
+  if (error) {
+    $("#resetPasswordMessage").textContent =
+      "Password update failed. Please try again.";
+    return;
+  }
+
+  $("#resetPasswordMessage").textContent =
+    "Password updated successfully. Please sign in.";
+
+  await supabaseClient.auth.signOut();
+
+  $("#resetPasswordScreen").hidden = true;
+  $("#loginScreen").hidden = false;
 });
