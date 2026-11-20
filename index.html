@@ -19,7 +19,25 @@
     <button id="installBtn" class="small-btn" hidden>Install</button>
   <button id="signOutBtn" class="small-btn" hidden>Sign out</button></header>
 
-  <section id="loginScreen" class="login-screen">
+  <section id="loginScreen" class="login-screen"><section id="resetPasswordScreen" hidden>
+  <div class="login-card">
+    <h1>Set New Password</h1>
+    <p>Choose a new password for your account.</p>
+
+    <form id="resetPasswordForm">
+      <label for="newPassword">New Password</label>
+      <input id="newPassword" type="password"
+        required minlength="8" autocomplete="new-password">
+
+      <label for="confirmNewPassword">Confirm New Password</label>
+      <input id="confirmNewPassword" type="password"
+        required minlength="8" autocomplete="new-password">
+
+      <button type="submit" class="primary">Save New Password</button>
+      <p id="resetPasswordMessage" role="status"></p>
+    </form>
+  </div>
+  </section>
     <div class="login-card">
       <div class="brandmark">TB</div>
       <h1>Torro Bah VDC</h1>
