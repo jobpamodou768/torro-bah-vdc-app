@@ -19,7 +19,25 @@
     <button id="installBtn" class="small-btn" hidden>Install</button>
   </header>
 
-  <main class="shell">
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="brandmark">TB</div>
+      <h1>Torro Bah VDC</h1>
+      <p>VDC Management System</p>
+      <form id="loginForm">
+        <label for="loginEmail">Email address</label>
+        <input id="loginEmail" type="email" required autocomplete="username">
+
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" required autocomplete="current-password">
+
+        <button type="submit" class="primary">Sign in</button>
+        <p id="loginMessage" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <main class="shell" id="appShell" hidden>
     <section class="welcome">
       <p class="eyebrow">VILLAGE DEVELOPMENT COMMITTEE</p>
       <h1>Management Dashboard</h1>
