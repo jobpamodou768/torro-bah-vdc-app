@@ -257,3 +257,28 @@ async function restoreLoginSession() {
 }
 
 restoreLoginSession();
+
+$("#forgotPasswordLink").addEventListener("click", async event => {
+  event.preventDefault();
+
+  const email = $("#loginEmail").value.trim();
+
+  if (!email) {
+    showLoginMessage("Enter your email address first.");
+    $("#loginEmail").focus();
+    return;
+  }
+
+  showLoginMessage("Sending password reset email...");
+
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: "https://jobpamodou768.github.io/torro-bah-vdc-app/"
+  });
+
+  if (error) {
+    showLoginMessage("Could not send reset email. Please try again.");
+    return;
+  }
+
+  showLoginMessage("Password reset instructions have been sent to your email.");
+});
