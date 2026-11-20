@@ -247,8 +247,8 @@ async function restoreLoginSession() {
   const { data, error } = await supabaseClient.auth.getSession();
 
   if (error) {
-    showLoginMessage("Could not check your login session.");
-    return;
+  showLoginMessage("Sign-in failed. Check your email and password.");
+  return;
   }
 
   if (data.session) {
