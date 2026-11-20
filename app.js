@@ -281,10 +281,7 @@ $("#forgotPasswordLink").addEventListener("click", async event => {
     redirectTo: "https://jobpamodou768.github.io/torro-bah-vdc-app/"
   });
 
-  if (error) {
-    showLoginMessage("Could not send reset email. Please try again.");
-    return;
-  }
+  showLoginMessage("Reset error: " + error.message);
 
   showLoginMessage("Password reset instructions have been sent to your email.");
 });
