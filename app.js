@@ -65,6 +65,8 @@ const commonFields = [
 let records = [];
 let currentRecordId = null;
 let deferredInstall = null;
+let currentUser = null;
+let currentVdcId = null;
 
 function loadRecords(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch{return []}}
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(records));updateCounts()}
@@ -197,6 +199,7 @@ async function openUserAccount(user) {
     return;
   }
 
+  currentUser = user;
   STORAGE_KEY = STORAGE_KEY_BASE + "_" + user.id;
   records = loadRecords();
   updateCounts();
@@ -205,7 +208,116 @@ async function openUserAccount(user) {
   $("#loginScreen").hidden = true;
   $("#appShell").hidden = false;
   $("#signOutBtn").hidden = false;
+  await initializeApprovalPanel(user);
 }
+
+async function initializeApprovalPanel(user) {
+  const tab = $("#approvalsTab");
+  const message = $("#approvalMessage");
+  const list = $("#pendingAccountsList");
+  tab.hidden = true;
+  list.innerHTML = "";
+  message.textContent = "Checking approval permissions...";
+
+  const { data: allowed, error: permissionError } = await supabaseClient.rpc(
+    "has_permission",
+    { requested_permission: "approve_accounts" }
+  );
+  if (permissionError || allowed !== true) {
+    message.textContent = "Your account does not have permission to approve accounts.";
+    return;
+  }
+
+  const { data: ownAccount, error: ownError } = await supabaseClient
+    .from("user_accounts").select("member_id").eq("id", user.id).maybeSingle();
+  if (ownError || !ownAccount) {
+    message.textContent = "Could not verify your VDC membership.";
+    return;
+  }
+
+  const { data: ownMember, error: memberError } = await supabaseClient
+    .from("members").select("vdc_id").eq("id", ownAccount.member_id).maybeSingle();
+  if (memberError || !ownMember?.vdc_id) {
+    message.textContent = "Could not identify your VDC. Please contact the system administrator.";
+    return;
+  }
+  currentVdcId = ownMember.vdc_id;
+  tab.hidden = false;
+  await loadPendingAccounts();
+}
+
+async function loadPendingAccounts() {
+  const message = $("#approvalMessage");
+  const list = $("#pendingAccountsList");
+  message.textContent = "Loading pending accounts...";
+  list.innerHTML = "";
+
+  const { data: pending, error } = await supabaseClient
+    .from("user_accounts")
+    .select("id, member_id, created_at")
+    .eq("account_status", "pending");
+
+  if (error) {
+    message.textContent = "Could not load pending accounts. Check the account access policies.";
+    return;
+  }
+  if (!pending?.length) {
+    message.textContent = "There are no pending accounts visible to you.";
+    return;
+  }
+
+  const memberIds = pending.map(row => row.member_id);
+  const { data: members, error: membersError } = await supabaseClient
+    .from("members")
+    .select("id, full_name, membership_id, status, vdc_id")
+    .in("id", memberIds)
+    .eq("vdc_id", currentVdcId);
+
+  if (membersError) {
+    message.textContent = "Could not load applicant membership details.";
+    return;
+  }
+
+  const memberMap = new Map((members || []).map(m => [m.id, m]));
+  const sameVdcPending = pending.filter(row => memberMap.has(row.member_id));
+  if (!sameVdcPending.length) {
+    message.textContent = "No pending accounts for your VDC were found.";
+    return;
+  }
+
+  message.textContent = "Review each applicant's membership before approving. Only applicants belonging to your VDC are shown.";
+  list.innerHTML = sameVdcPending.map(row => {
+    const m = memberMap.get(row.member_id);
+    return `<article class="record-card approval-card">
+      <div class="meta">
+        <strong>${escapeHtml(m.full_name || "Name unavailable")}</strong>
+        <small>${escapeHtml(m.membership_id || "No membership number")} • Membership: ${escapeHtml(m.status || "Unknown")}</small>
+      </div>
+      <button class="primary" data-approve-account="${escapeHtml(row.id)}">Approve</button>
+    </article>`;
+  }).join("");
+}
+
+$("#pendingAccountsList").addEventListener("click", async event => {
+  const button = event.target.closest("[data-approve-account]");
+  if (!button) return;
+  const targetId = button.dataset.approveAccount;
+  if (!confirm("Confirm that you have checked this person's identity and Torro Bah VDC membership, and approve their app account?")) return;
+
+  button.disabled = true;
+  button.textContent = "Approving...";
+  const { data, error } = await supabaseClient.rpc("approve_user_account", {
+    target_user_id: targetId
+  });
+  if (error || data !== true) {
+    $("#approvalMessage").textContent = error?.message || "Approval could not be completed.";
+    button.disabled = false;
+    button.textContent = "Approve";
+    return;
+  }
+  $("#approvalMessage").textContent = "Account approved successfully.";
+  await loadPendingAccounts();
+});
 
 $("#loginForm").addEventListener("submit", async event => {
   event.preventDefault();
