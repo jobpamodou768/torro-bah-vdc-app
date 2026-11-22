@@ -141,3 +141,11 @@ height:55px
 .approval-card{align-items:center}
 .approval-card .primary{white-space:nowrap}
 .approval-card button:disabled{opacity:.65;cursor:wait}
+
+/* Applicant review and verification */
+#applicantDialog{max-width:680px}
+#applicantReviewDetails{margin:12px 0}
+#applicantReviewDetails .detail-row:first-child{border-top:1px solid var(--line)}
+.review-check{display:flex;align-items:flex-start;gap:10px;padding:10px 0;font-weight:600;line-height:1.4}
+.review-check input{width:20px;min-width:20px;height:20px;min-height:20px;margin:0;accent-color:var(--green)}
+#confirmApplicantApproval:disabled{opacity:.45;cursor:not-allowed}
