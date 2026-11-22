@@ -201,6 +201,25 @@
     <footer>VDC MANAGEMENT SYSTEM <span>•</span> Version 1.1 prototype</footer>
   </main>
 
+  <dialog id="applicantDialog">
+    <div class="dialog-head">
+      <h2 id="applicantReviewTitle">Applicant details</h2>
+      <button id="closeApplicantDialog" class="icon-btn" aria-label="Close">×</button>
+    </div>
+    <p class="hint">Review the applicant's information and compare it with the official Torro Bah VDC membership register.</p>
+    <div id="applicantReviewDetails"></div>
+    <div class="notice warning">
+      <strong>Verification required</strong>
+      Tick both checks only after you have personally verified the applicant. Missing information must be checked using the official VDC records.
+    </div>
+    <label class="review-check"><input id="applicantIdentityCheck" type="checkbox"> I have verified the applicant's identity.</label>
+    <label class="review-check"><input id="applicantMembershipCheck" type="checkbox"> I have confirmed the membership ID and approved membership status against the official VDC register.</label>
+    <p id="applicantReviewMessage" class="hint" role="status"></p>
+    <div class="button-row">
+      <button id="confirmApplicantApproval" class="primary" disabled>Approve account</button>
+    </div>
+  </dialog>
+
   <dialog id="recordDialog">
     <div class="dialog-head">
       <h2 id="dialogTitle">Record</h2>
