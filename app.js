@@ -215,7 +215,9 @@ async function initializeApprovalPanel(user) {
   const tab = $("#approvalsTab");
   const message = $("#approvalMessage");
   const list = $("#pendingAccountsList");
-  tab.hidden = true;
+  // Show the tab to signed-in users so permission/deployment problems are visible.
+  // Pending applicant data and approval actions remain permission-gated below.
+  tab.hidden = false;
   list.innerHTML = "";
   message.textContent = "Checking approval permissions...";
 
