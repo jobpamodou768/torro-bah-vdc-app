@@ -248,11 +248,70 @@ async function initializeApprovalPanel(user) {
   await loadPendingAccounts();
 }
 
+let pendingApplicantMap = new Map();
+let selectedApplicantAccountId = null;
+
+function applicantValue(value) {
+  return value === null || value === undefined || value === "" ? "Not provided" : String(value);
+}
+
+function showApplicantReview(accountId) {
+  const applicant = pendingApplicantMap.get(accountId);
+  if (!applicant) return;
+  selectedApplicantAccountId = accountId;
+  $("#applicantReviewTitle").textContent = applicant.full_name || "Applicant details";
+  const details = [
+    ["Full name", applicant.full_name],
+    ["Membership ID", applicant.membership_id],
+    ["Membership status", applicant.status],
+    ["Member category", applicant.category],
+    ["Phone number", applicant.phone],
+    ["Email address", applicant.email],
+    ["Residential status", applicant.residential_status],
+    ["Current residence", applicant.current_residence],
+    ["Membership registration date", applicant.registration_date],
+    ["App account created", applicant.account_created_at ? new Date(applicant.account_created_at).toLocaleString() : null]
+  ];
+  $("#applicantReviewDetails").innerHTML = details.map(([label,value]) =>
+    `<div class="detail-row"><small>${escapeHtml(label)}</small><div>${escapeHtml(applicantValue(value))}</div></div>`
+  ).join("");
+  $("#applicantIdentityCheck").checked = false;
+  $("#applicantMembershipCheck").checked = false;
+  $("#confirmApplicantApproval").disabled = true;
+  $("#applicantReviewMessage").textContent = "Compare these details with the official VDC membership register before making a decision.";
+  $("#applicantDialog").showModal();
+}
+
+function updateApplicantApprovalReady() {
+  $("#confirmApplicantApproval").disabled =
+    !($("#applicantIdentityCheck").checked && $("#applicantMembershipCheck").checked);
+}
+
+async function approveApplicant(accountId, button) {
+  if (!confirm("Have you personally verified the applicant's identity and approved VDC membership, and do you intend to activate this account?")) return;
+  button.disabled = true;
+  button.textContent = "Approving...";
+  const { data, error } = await supabaseClient.rpc("approve_user_account", {
+    target_user_id: accountId
+  });
+  if (error || data !== true) {
+    $("#applicantReviewMessage").textContent = error?.message || "Approval could not be completed.";
+    button.disabled = false;
+    button.textContent = "Approve account";
+    return;
+  }
+  $("#applicantReviewMessage").textContent = "Account approved successfully.";
+  $("#applicantDialog").close();
+  $("#approvalMessage").textContent = "Account approved successfully.";
+  await loadPendingAccounts();
+}
+
 async function loadPendingAccounts() {
   const message = $("#approvalMessage");
   const list = $("#pendingAccountsList");
   message.textContent = "Loading pending accounts...";
   list.innerHTML = "";
+  pendingApplicantMap = new Map();
 
   const { data: pending, error } = await supabaseClient
     .from("user_accounts")
@@ -271,12 +330,12 @@ async function loadPendingAccounts() {
   const memberIds = pending.map(row => row.member_id);
   const { data: members, error: membersError } = await supabaseClient
     .from("members")
-    .select("id, full_name, membership_id, status, vdc_id")
+    .select("id, full_name, membership_id, status, vdc_id, phone, email, category, residential_status, current_residence, registration_date")
     .in("id", memberIds)
     .eq("vdc_id", currentVdcId);
 
   if (membersError) {
-    message.textContent = "Could not load applicant membership details.";
+    message.textContent = "Could not load applicant details. Check the member-record access policy.";
     return;
   }
 
@@ -287,38 +346,31 @@ async function loadPendingAccounts() {
     return;
   }
 
-  message.textContent = "Review each applicant's membership before approving. Only applicants belonging to your VDC are shown.";
+  message.textContent = "Open View application for each applicant. Verify identity and membership against the official VDC register before approval.";
   list.innerHTML = sameVdcPending.map(row => {
     const m = memberMap.get(row.member_id);
+    pendingApplicantMap.set(row.id, {...m, account_created_at: row.created_at});
     return `<article class="record-card approval-card">
       <div class="meta">
         <strong>${escapeHtml(m.full_name || "Name unavailable")}</strong>
         <small>${escapeHtml(m.membership_id || "No membership number")} • Membership: ${escapeHtml(m.status || "Unknown")}</small>
       </div>
-      <button class="primary" data-approve-account="${escapeHtml(row.id)}">Approve</button>
+      <button class="secondary" data-view-applicant="${escapeHtml(row.id)}">View application</button>
     </article>`;
   }).join("");
 }
 
-$("#pendingAccountsList").addEventListener("click", async event => {
-  const button = event.target.closest("[data-approve-account]");
-  if (!button) return;
-  const targetId = button.dataset.approveAccount;
-  if (!confirm("Confirm that you have checked this person's identity and Torro Bah VDC membership, and approve their app account?")) return;
+$("#pendingAccountsList").addEventListener("click", event => {
+  const button = event.target.closest("[data-view-applicant]");
+  if (button) showApplicantReview(button.dataset.viewApplicant);
+});
 
-  button.disabled = true;
-  button.textContent = "Approving...";
-  const { data, error } = await supabaseClient.rpc("approve_user_account", {
-    target_user_id: targetId
-  });
-  if (error || data !== true) {
-    $("#approvalMessage").textContent = error?.message || "Approval could not be completed.";
-    button.disabled = false;
-    button.textContent = "Approve";
-    return;
-  }
-  $("#approvalMessage").textContent = "Account approved successfully.";
-  await loadPendingAccounts();
+$("#applicantIdentityCheck").addEventListener("change", updateApplicantApprovalReady);
+$("#applicantMembershipCheck").addEventListener("change", updateApplicantApprovalReady);
+$("#closeApplicantDialog").addEventListener("click", () => $("#applicantDialog").close());
+$("#confirmApplicantApproval").addEventListener("click", async () => {
+  if (!selectedApplicantAccountId) return;
+  await approveApplicant(selectedApplicantAccountId, $("#confirmApplicantApproval"));
 });
 
 $("#loginForm").addEventListener("submit", async event => {
