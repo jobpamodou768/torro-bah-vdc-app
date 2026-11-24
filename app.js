@@ -333,6 +333,23 @@ async function loadFinanceRequests() {
   }).join("");
 }
 
+const paymentSubmitButton = $("#submitPaymentRequestBtn");
+if (paymentSubmitButton) {
+  paymentSubmitButton.addEventListener("click", () => {
+    const form = $("#paymentRequestForm");
+    const invalidField = Array.from(form.elements).find(field =>
+      field.willValidate && !field.checkValidity()
+    );
+    if (invalidField) {
+      const label = invalidField.labels?.[0]?.textContent || invalidField.id || "a required field";
+      $("#financeMessage").textContent = "Please complete or correct: " + label;
+      invalidField.reportValidity();
+    } else {
+      $("#financeMessage").textContent = "Button tap detected. Sending form...";
+    }
+  });
+}
+
 $("#paymentRequestForm").addEventListener("submit", async event => {
   event.preventDefault();
   if (!currentUser || !currentVdcId) {
