@@ -74,6 +74,7 @@
     <nav class="tabs" aria-label="Main sections">
       <button class="tab active" data-tab="dashboard">Dashboard</button>
       <button class="tab" data-tab="approvals" id="approvalsTab" hidden>Account approvals</button>
+      <button class="tab" data-tab="finance" id="financeTab" hidden>Finance</button>
       <button class="tab" data-tab="workspace">Officer toolkit</button>
       <button class="tab" data-tab="records">Saved records</button>
       <button class="tab" data-tab="about">About & backup</button>
@@ -102,6 +103,11 @@
           <strong>Create a record</strong>
           <small>Open officer templates</small>
         </button>
+        <button class="quick-card" data-go="finance">
+          <span class="quick-icon">G</span>
+          <strong>Finance requests</strong>
+          <small>Create and review payment requests</small>
+        </button>
         <button class="quick-card" data-go="records">
           <span class="quick-icon">▤</span>
           <strong>View saved records</strong>
@@ -123,7 +129,8 @@
 
       <div class="module-list">
         <div><strong>Membership & officers</strong><span>Planned</span></div>
-        <div><strong>Finance & bank accounts</strong><span>Planned</span></div>
+        <div><strong>Finance payment requests</strong><span>Connected</span></div>
+        <div><strong>Bank accounts & statements</strong><span>Planned</span></div>
         <div><strong>Projects & procurement</strong><span>Planned</span></div>
         <div><strong>Documents, approvals & reports</strong><span>Planned</span></div>
       </div>
@@ -138,6 +145,47 @@
       <p class="hint">Review applicants belonging to Torro Bah VDC before approving access. Approval is recorded against the signed-in officer.</p>
       <div id="approvalMessage" class="notice" role="status">Checking approval permissions...</div>
       <div id="pendingAccountsList" class="records-list"></div>
+    </section>
+
+    <section id="finance" class="panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">FINANCIAL CONTROL</p><h2>Payment requests</h2></div>
+      </div>
+      <p class="hint">Create a request for VDC expenditure, review its status, and record verification or approval decisions. The database enforces officer permissions and approval limits.</p>
+      <div id="financeMessage" class="notice" role="status">Finance workspace is loading...</div>
+
+      <h3>New payment request</h3>
+      <form id="paymentRequestForm" class="record-form">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="paymentRequestTitle">Request title *</label>
+            <input id="paymentRequestTitle" type="text" maxlength="180" required>
+          </div>
+          <div class="field full">
+            <label for="paymentRequestPurpose">Purpose and justification *</label>
+            <textarea id="paymentRequestPurpose" required></textarea>
+          </div>
+          <div class="field">
+            <label for="paymentRequestAmount">Amount (GMD) *</label>
+            <input id="paymentRequestAmount" type="number" min="0.01" step="0.01" required>
+          </div>
+          <div class="field">
+            <label for="paymentRequiredDate">Required date (optional)</label>
+            <input id="paymentRequiredDate" type="date">
+          </div>
+          <div class="field full">
+            <label for="paymentBudgetReference">Budget reference (optional)</label>
+            <input id="paymentBudgetReference" type="text" maxlength="120">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="submitPaymentRequestBtn" class="primary">Submit for verification</button>
+        </div>
+        <p class="hint">Submission requires the manage-finances permission. A submitted request enters the verification stage.</p>
+      </form>
+
+      <h3>VDC payment request register</h3>
+      <div id="financeRequestsList" class="records-list"></div>
     </section>
 
     <section id="workspace" class="panel">
