@@ -208,7 +208,38 @@ async function openUserAccount(user) {
   $("#loginScreen").hidden = true;
   $("#appShell").hidden = false;
   $("#signOutBtn").hidden = false;
+  await initializeUserContext(user);
   await initializeApprovalPanel(user);
+  await initializeFinancePanel();
+}
+
+async function initializeUserContext(user) {
+  currentVdcId = null;
+  const { data: ownAccount, error: accountError } = await supabaseClient
+    .from("user_accounts")
+    .select("member_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (accountError || !ownAccount?.member_id) {
+    const message = $("#financeMessage");
+    if (message) message.textContent = "Your VDC membership could not be identified. Finance access is unavailable.";
+    return;
+  }
+
+  const { data: ownMember, error: memberError } = await supabaseClient
+    .from("members")
+    .select("vdc_id")
+    .eq("id", ownAccount.member_id)
+    .maybeSingle();
+
+  if (memberError || !ownMember?.vdc_id) {
+    const message = $("#financeMessage");
+    if (message) message.textContent = "Your VDC could not be identified. Finance access is unavailable.";
+    return;
+  }
+
+  currentVdcId = ownMember.vdc_id;
 }
 
 async function initializeApprovalPanel(user) {
@@ -230,23 +261,161 @@ async function initializeApprovalPanel(user) {
     return;
   }
 
-  const { data: ownAccount, error: ownError } = await supabaseClient
-    .from("user_accounts").select("member_id").eq("id", user.id).maybeSingle();
-  if (ownError || !ownAccount) {
-    message.textContent = "Could not verify your VDC membership.";
-    return;
-  }
-
-  const { data: ownMember, error: memberError } = await supabaseClient
-    .from("members").select("vdc_id").eq("id", ownAccount.member_id).maybeSingle();
-  if (memberError || !ownMember?.vdc_id) {
+  if (!currentVdcId) {
     message.textContent = "Could not identify your VDC. Please contact the system administrator.";
     return;
   }
-  currentVdcId = ownMember.vdc_id;
   tab.hidden = false;
   await loadPendingAccounts();
 }
+
+
+// FINANCE WORKSPACE — payment requests and controlled approvals
+function makePaymentRequestNumber() {
+  const token = crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `TB-${new Date().getFullYear()}-${token}`;
+}
+
+async function initializeFinancePanel() {
+  const tab = $("#financeTab");
+  if (tab) tab.hidden = false;
+  $("#financeMessage").textContent = currentVdcId
+    ? "Loading finance records..."
+    : "Your VDC could not be identified. Finance access is unavailable.";
+  if (currentVdcId) await loadFinanceRequests();
+}
+
+async function loadFinanceRequests() {
+  const message = $("#financeMessage");
+  const list = $("#financeRequestsList");
+  if (!currentVdcId) {
+    message.textContent = "Your VDC could not be identified. Finance access is unavailable.";
+    list.innerHTML = "";
+    return;
+  }
+
+  message.textContent = "Loading payment requests...";
+  list.innerHTML = "";
+  const { data, error } = await supabaseClient
+    .from("financial_payment_requests")
+    .select("id, request_number, request_title, purpose, amount, currency, request_date, required_date, budget_reference, status, created_at")
+    .eq("vdc_id", currentVdcId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    message.textContent = "Finance records are not visible to this account. Check finance permissions and database access policies.";
+    return;
+  }
+
+  message.textContent = data?.length
+    ? `Showing ${data.length} payment request(s) for this VDC. Actions are validated by the database.`
+    : "No payment requests have been recorded for this VDC.";
+
+  list.innerHTML = (data || []).map(request => {
+    const status = String(request.status || "").replace(/_/g, " ");
+    let actions = "";
+    if (request.status === "pending_verification") {
+      actions = `<button class="secondary" data-finance-action="verified" data-request-id="${escapeHtml(request.id)}">Verify</button>
+        <button class="danger" data-finance-action="verification-rejected" data-request-id="${escapeHtml(request.id)}">Reject</button>`;
+    } else if (request.status === "pending_approval") {
+      actions = `<button class="primary" data-finance-action="approved" data-request-id="${escapeHtml(request.id)}">Approve</button>
+        <button class="danger" data-finance-action="approval-rejected" data-request-id="${escapeHtml(request.id)}">Reject</button>`;
+    }
+    return `<article class="record-card finance-card">
+      <div class="meta">
+        <strong>${escapeHtml(request.request_title)}</strong>
+        <small>${escapeHtml(request.request_number)} • GMD ${Number(request.amount).toLocaleString()} • ${escapeHtml(status)}</small>
+        <small>Requested: ${escapeHtml(request.request_date || "—")}${request.required_date ? " • Needed: " + escapeHtml(request.required_date) : ""}</small>
+        <small>${escapeHtml(request.purpose)}</small>
+      </div>
+      <div class="finance-actions">${actions}</div>
+    </article>`;
+  }).join("");
+}
+
+$("#paymentRequestForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!currentUser || !currentVdcId) {
+    $("#financeMessage").textContent = "Your login or VDC membership is not ready. Please sign in again.";
+    return;
+  }
+
+  const button = $("#submitPaymentRequestBtn");
+  button.disabled = true;
+  button.textContent = "Submitting...";
+  const requestId = crypto.randomUUID();
+  const payload = {
+    id: requestId,
+    vdc_id: currentVdcId,
+    request_number: makePaymentRequestNumber(),
+    request_title: $("#paymentRequestTitle").value.trim(),
+    purpose: $("#paymentRequestPurpose").value.trim(),
+    amount: Number($("#paymentRequestAmount").value),
+    requested_by: currentUser.id,
+    status: "pending_verification",
+    required_date: $("#paymentRequiredDate").value || null,
+    budget_reference: $("#paymentBudgetReference").value.trim() || null
+  };
+
+  const { error } = await supabaseClient
+    .from("financial_payment_requests")
+    .insert(payload);
+
+  button.disabled = false;
+  button.textContent = "Submit for verification";
+
+  if (error) {
+    $("#financeMessage").textContent = error.code === "23505"
+      ? "That request number already exists. Please submit again to generate another number."
+      : "The request was not saved: " + error.message;
+    return;
+  }
+
+  $("#paymentRequestForm").reset();
+  $("#financeMessage").textContent = "Payment request submitted for verification.";
+  await loadFinanceRequests();
+});
+
+$("#financeRequestsList").addEventListener("click", async event => {
+  const button = event.target.closest("[data-finance-action]");
+  if (!button) return;
+
+  const action = button.dataset.financeAction;
+  const requestId = button.dataset.requestId;
+  const rejected = action.endsWith("rejected");
+  const stage = action.startsWith("verification") || action === "verified"
+    ? "verification"
+    : "final_approval";
+  const decision = rejected ? "rejected" : (stage === "verification" ? "verified" : "approved");
+  const comments = prompt(rejected
+    ? "Enter the reason for rejection (required):"
+    : "Comments (optional):");
+
+  if (comments === null) return;
+  if (rejected && !comments.trim()) {
+    alert("A written rejection reason is required.");
+    return;
+  }
+  if (!confirm(`Confirm decision: ${decision.replace(/_/g, " ")}?`)) return;
+
+  button.disabled = true;
+  const { error } = await supabaseClient.rpc("record_financial_approval", {
+    p_payment_request_id: requestId,
+    p_approval_stage: stage,
+    p_decision: decision,
+    p_comments: comments.trim() || null,
+    p_delegation_id: null
+  });
+
+  if (error) {
+    $("#financeMessage").textContent = "Decision not recorded: " + error.message;
+    button.disabled = false;
+    return;
+  }
+
+  $("#financeMessage").textContent = "Decision recorded successfully.";
+  await loadFinanceRequests();
+});
 
 let pendingApplicantMap = new Map();
 let selectedApplicantAccountId = null;
