@@ -175,3 +175,12 @@ height:55px
   text-indent: 0 !important;
   visibility: visible !important;
 }
+
+
+/* Finance decision confirmation dialog */
+#financeDecisionDialog{max-width:560px}
+#financeDecisionDialog form{margin-top:14px}
+#financeDecisionReason{width:100%;min-height:110px;resize:vertical}
+#financeDecisionMessage{overflow-wrap:anywhere}
+#financeDecisionDialog .button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+#financeDecisionDialog button:disabled{opacity:.6;cursor:wait}
