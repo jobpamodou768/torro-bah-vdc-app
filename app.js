@@ -433,43 +433,77 @@ $("#paymentRequestForm").addEventListener("submit", async event => {
   await loadFinanceRequests();
 });
 
-$("#financeRequestsList").addEventListener("click", async event => {
+let pendingFinanceDecision = null;
+
+$("#financeRequestsList").addEventListener("click", event => {
   const button = event.target.closest("[data-finance-action]");
   if (!button) return;
 
   const action = button.dataset.financeAction;
-  const requestId = button.dataset.requestId;
   const rejected = action.endsWith("rejected");
   const stage = action.startsWith("verification") || action === "verified"
     ? "verification"
     : "final_approval";
   const decision = rejected ? "rejected" : (stage === "verification" ? "verified" : "approved");
-  const comments = prompt(rejected
-    ? "Enter the reason for rejection (required):"
-    : "Comments (optional):");
 
-  if (comments === null) return;
-  if (rejected && !comments.trim()) {
-    alert("A written rejection reason is required.");
+  pendingFinanceDecision = { button, requestId: button.dataset.requestId, stage, decision };
+  $("#financeDecisionTitle").textContent = rejected
+    ? "Reject payment request"
+    : decision === "verified" ? "Verify payment request" : "Approve payment request";
+  $("#financeDecisionPrompt").textContent = rejected
+    ? "Enter the reason. A written reason is required and will be saved in the approval history."
+    : "Add an optional comment, then confirm your decision.";
+  $("#financeDecisionReasonLabel").textContent = rejected ? "Reason for rejection *" : "Comments (optional)";
+  $("#financeDecisionReason").value = "";
+  $("#financeDecisionReason").required = rejected;
+  $("#financeDecisionMessage").textContent = "";
+  $("#confirmFinanceDecision").textContent = rejected
+    ? "Confirm rejection"
+    : decision === "verified" ? "Confirm verification" : "Confirm approval";
+  $("#confirmFinanceDecision").disabled = false;
+  $("#financeDecisionDialog").showModal();
+});
+
+const closeFinanceDecision = () => {
+  pendingFinanceDecision = null;
+  $("#financeDecisionDialog").close();
+};
+$("#cancelFinanceDecision").addEventListener("click", closeFinanceDecision);
+$("#cancelFinanceDecisionBottom").addEventListener("click", closeFinanceDecision);
+
+$("#financeDecisionForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!pendingFinanceDecision) return;
+
+  const { button, requestId, stage, decision } = pendingFinanceDecision;
+  const comments = $("#financeDecisionReason").value.trim();
+  if (decision === "rejected" && !comments) {
+    $("#financeDecisionMessage").textContent = "A written rejection reason is required.";
     return;
   }
-  if (!confirm(`Confirm decision: ${decision.replace(/_/g, " ")}?`)) return;
 
+  const confirmButton = $("#confirmFinanceDecision");
+  confirmButton.disabled = true;
   button.disabled = true;
+  $("#financeDecisionMessage").textContent = "Recording decision...";
+
   const { error } = await supabaseClient.rpc("record_financial_approval", {
     p_payment_request_id: requestId,
     p_approval_stage: stage,
     p_decision: decision,
-    p_comments: comments.trim() || null,
+    p_comments: comments || null,
     p_delegation_id: null
   });
 
   if (error) {
-    $("#financeMessage").textContent = "Decision not recorded: " + error.message;
+    $("#financeDecisionMessage").textContent = "Decision not recorded: " + error.message;
+    confirmButton.disabled = false;
     button.disabled = false;
     return;
   }
 
+  $("#financeDecisionDialog").close();
+  pendingFinanceDecision = null;
   $("#financeMessage").textContent = "Decision recorded successfully.";
   await loadFinanceRequests();
 });
