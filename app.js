@@ -471,7 +471,7 @@ const closeFinanceDecision = () => {
 $("#cancelFinanceDecision").addEventListener("click", closeFinanceDecision);
 $("#cancelFinanceDecisionBottom").addEventListener("click", closeFinanceDecision);
 
-$("#confirmFinanceDecision").addEventListener("click", async event => {
+window.confirmFinanceDecisionAction = async event => {
   event.preventDefault();
   const message = $("#financeDecisionMessage");
   const confirmButton = $("#confirmFinanceDecision");
@@ -518,7 +518,7 @@ $("#confirmFinanceDecision").addEventListener("click", async event => {
     confirmButton.disabled = false;
     button.disabled = false;
   }
-});
+};
 
 let pendingApplicantMap = new Map();
 let selectedApplicantAccountId = null;
