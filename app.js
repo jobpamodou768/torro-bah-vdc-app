@@ -288,6 +288,7 @@ async function initializeFinancePanel() {
 async function loadFinanceRequests() {
   const message = $("#financeMessage");
   const list = $("#financeRequestsList");
+
   if (!currentVdcId) {
     message.textContent = "Your VDC could not be identified. Finance access is unavailable.";
     list.innerHTML = "";
@@ -296,6 +297,7 @@ async function loadFinanceRequests() {
 
   message.textContent = "Loading payment requests...";
   list.innerHTML = "";
+
   const { data, error } = await supabaseClient
     .from("financial_payment_requests")
     .select("id, request_number, request_title, purpose, amount, currency, request_date, required_date, budget_reference, status, created_at")
@@ -307,6 +309,21 @@ async function loadFinanceRequests() {
     return;
   }
 
+  const [
+    { data: canVerify, error: verifyError },
+    { data: canApprove, error: approveError }
+  ] = await Promise.all([
+    supabaseClient.rpc("has_permission", {
+      requested_permission: "verify_payments"
+    }),
+    supabaseClient.rpc("has_permission", {
+      requested_permission: "approve_payments"
+    })
+  ]);
+
+  const mayVerifyPayments = !verifyError && canVerify === true;
+  const mayApprovePayments = !approveError && canApprove === true;
+
   message.textContent = data?.length
     ? `Showing ${data.length} payment request(s) for this VDC. Actions are validated by the database.`
     : "No payment requests have been recorded for this VDC.";
@@ -314,22 +331,45 @@ async function loadFinanceRequests() {
   list.innerHTML = (data || []).map(request => {
     const status = String(request.status || "").replace(/_/g, " ");
     let actions = "";
-    if (request.status === "pending_verification") {
-      actions = `<button class="secondary" data-finance-action="verified" data-request-id="${escapeHtml(request.id)}">Verify</button>
-        <button class="danger" data-finance-action="verification-rejected" data-request-id="${escapeHtml(request.id)}">Reject</button>`;
-    } else if (request.status === "pending_approval") {
-      actions = `<button class="primary" data-finance-action="approved" data-request-id="${escapeHtml(request.id)}">Approve</button>
-        <button class="danger" data-finance-action="approval-rejected" data-request-id="${escapeHtml(request.id)}">Reject</button>`;
+
+    if (request.status === "pending_verification" && mayVerifyPayments) {
+      actions = `
+        <button class="secondary"
+          data-finance-action="verified"
+          data-request-id="${escapeHtml(request.id)}">Verify</button>
+        <button class="danger"
+          data-finance-action="verification-rejected"
+          data-request-id="${escapeHtml(request.id)}">Reject</button>`;
+    } else if (request.status === "pending_approval" && mayApprovePayments) {
+      actions = `
+        <button class="primary"
+          data-finance-action="approved"
+          data-request-id="${escapeHtml(request.id)}">Approve</button>
+        <button class="danger"
+          data-finance-action="approval-rejected"
+          data-request-id="${escapeHtml(request.id)}">Reject</button>`;
     }
-    return `<article class="record-card finance-card">
-      <div class="meta">
-        <strong>${escapeHtml(request.request_title)}</strong>
-        <small>${escapeHtml(request.request_number)} • GMD ${Number(request.amount).toLocaleString()} • ${escapeHtml(status)}</small>
-        <small>Requested: ${escapeHtml(request.request_date || "—")}${request.required_date ? " • Needed: " + escapeHtml(request.required_date) : ""}</small>
-        <small>${escapeHtml(request.purpose)}</small>
-      </div>
-      <div class="finance-actions">${actions}</div>
-    </article>`;
+
+    return `
+      <article class="record-card finance-card">
+        <div class="meta">
+          <strong>${escapeHtml(request.request_title)}</strong>
+          <small>
+            ${escapeHtml(request.request_number)}
+            • ${escapeHtml(request.currency || "GMD")}
+            ${Number(request.amount).toLocaleString()}
+            • ${escapeHtml(status)}
+          </small>
+          <small>
+            Requested: ${escapeHtml(request.request_date || "—")}
+            ${request.required_date
+              ? " • Needed: " + escapeHtml(request.required_date)
+              : ""}
+          </small>
+          <small>${escapeHtml(request.purpose)}</small>
+        </div>
+        <div class="finance-actions">${actions}</div>
+      </article>`;
   }).join("");
 }
 
