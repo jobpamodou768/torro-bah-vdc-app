@@ -161,3 +161,17 @@ height:55px
   color: #fff;
   border: 0;
 }
+
+
+/* Strong visibility fix for the Finance approval action */
+#financeRequestsList .finance-card button[data-finance-action="approved"] {
+  display: inline-block !important;
+  background-color: #174b38 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+  text-indent: 0 !important;
+  visibility: visible !important;
+}
