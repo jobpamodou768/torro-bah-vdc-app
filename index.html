@@ -268,6 +268,23 @@
     </div>
   </dialog>
 
+  <dialog id="financeDecisionDialog" aria-labelledby="financeDecisionTitle">
+    <div class="dialog-head">
+      <h2 id="financeDecisionTitle">Confirm finance decision</h2>
+      <button type="button" id="cancelFinanceDecision" class="icon-btn" aria-label="Cancel">×</button>
+    </div>
+    <p id="financeDecisionPrompt" class="hint"></p>
+    <form id="financeDecisionForm">
+      <label id="financeDecisionReasonLabel" for="financeDecisionReason">Comments</label>
+      <textarea id="financeDecisionReason" rows="4" maxlength="2000"></textarea>
+      <p id="financeDecisionMessage" class="hint" role="status" aria-live="polite"></p>
+      <div class="button-row">
+        <button type="button" id="cancelFinanceDecisionBottom" class="secondary">Cancel</button>
+        <button type="submit" id="confirmFinanceDecision" class="primary">Confirm decision</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="recordDialog">
     <div class="dialog-head">
       <h2 id="dialogTitle">Record</h2>
