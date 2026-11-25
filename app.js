@@ -471,41 +471,53 @@ const closeFinanceDecision = () => {
 $("#cancelFinanceDecision").addEventListener("click", closeFinanceDecision);
 $("#cancelFinanceDecisionBottom").addEventListener("click", closeFinanceDecision);
 
-$("#financeDecisionForm").addEventListener("submit", async event => {
+$("#confirmFinanceDecision").addEventListener("click", async event => {
   event.preventDefault();
-  if (!pendingFinanceDecision) return;
+  const message = $("#financeDecisionMessage");
+  const confirmButton = $("#confirmFinanceDecision");
+
+  if (!pendingFinanceDecision) {
+    message.textContent = "No pending finance decision was found. Close this window and try again.";
+    return;
+  }
 
   const { button, requestId, stage, decision } = pendingFinanceDecision;
   const comments = $("#financeDecisionReason").value.trim();
   if (decision === "rejected" && !comments) {
-    $("#financeDecisionMessage").textContent = "A written rejection reason is required.";
+    message.textContent = "A written rejection reason is required.";
     return;
   }
 
-  const confirmButton = $("#confirmFinanceDecision");
   confirmButton.disabled = true;
   button.disabled = true;
-  $("#financeDecisionMessage").textContent = "Recording decision...";
+  message.textContent = "Recording decision... Please wait.";
 
-  const { error } = await supabaseClient.rpc("record_financial_approval", {
-    p_payment_request_id: requestId,
-    p_approval_stage: stage,
-    p_decision: decision,
-    p_comments: comments || null,
-    p_delegation_id: null
-  });
+  try {
+    const { error } = await supabaseClient.rpc("record_financial_approval", {
+      p_payment_request_id: requestId,
+      p_approval_stage: stage,
+      p_decision: decision,
+      p_comments: comments || null,
+      p_delegation_id: null
+    });
 
-  if (error) {
-    $("#financeDecisionMessage").textContent = "Decision not recorded: " + error.message;
+    if (error) {
+      message.textContent = "Decision not recorded: " + error.message;
+      confirmButton.disabled = false;
+      button.disabled = false;
+      return;
+    }
+
+    $("#financeDecisionDialog").close();
+    pendingFinanceDecision = null;
+    $("#financeMessage").textContent = "Decision recorded successfully. Refreshing the request list...";
+    await loadFinanceRequests();
+    $("#financeMessage").textContent = "Decision recorded successfully.";
+  } catch (error) {
+    message.textContent = "Unexpected error: " + (error?.message || String(error));
     confirmButton.disabled = false;
     button.disabled = false;
-    return;
   }
-
-  $("#financeDecisionDialog").close();
-  pendingFinanceDecision = null;
-  $("#financeMessage").textContent = "Decision recorded successfully.";
-  await loadFinanceRequests();
 });
 
 let pendingApplicantMap = new Map();
