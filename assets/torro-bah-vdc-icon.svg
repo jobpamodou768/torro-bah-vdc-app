@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">Torro Bah Village Development Committee</title>
+<desc id="desc">Green and gold community crest with a baobab tree, village huts, farmland and a handshake.</desc>
+<defs>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0a6"/><stop offset=".48" stop-color="#d9a83d"/><stop offset="1" stop-color="#8e5c19"/></linearGradient>
+ <linearGradient id="green" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#246447"/><stop offset="1" stop-color="#092d20"/></linearGradient>
+ <clipPath id="scene"><circle cx="256" cy="245" r="174"/></clipPath>
+</defs>
+<rect width="512" height="512" rx="82" fill="#0b3525"/>
+<rect x="9" y="9" width="494" height="494" rx="75" fill="url(#green)" stroke="url(#gold)" stroke-width="9"/>
+<circle cx="256" cy="244" r="203" fill="#0d3827" stroke="url(#gold)" stroke-width="13"/>
+<circle cx="256" cy="244" r="187" fill="#174b38" stroke="#f2d27a" stroke-width="4"/>
+<g clip-path="url(#scene)">
+ <rect x="70" y="70" width="372" height="350" fill="#f6d98b"/>
+ <rect x="70" y="70" width="372" height="210" fill="#f7e7b6"/>
+ <circle cx="256" cy="245" r="80" fill="#f7c94e"/>
+ <path d="M70 292 Q155 252 225 292 T442 284 V420 H70Z" fill="#6e9d45"/>
+ <path d="M70 335 Q180 300 255 336 T442 324 V420 H70Z" fill="#347445"/>
+ <path d="M70 368 Q180 334 255 365 T442 352" fill="none" stroke="#d7b65c" stroke-width="8"/>
+ <path d="M85 385 Q180 350 256 381 T430 367" fill="none" stroke="#d7b65c" stroke-width="6"/>
+ <g fill="#8e542b" stroke="#63391e" stroke-width="4">
+  <path d="M106 297 L142 269 L179 297 V337 H106Z"/><path d="M100 298 L142 262 L185 298Z" fill="#d89b3f"/>
+  <path d="M166 312 L195 289 L225 312 V342 H166Z"/><path d="M160 312 L195 282 L231 312Z" fill="#d89b3f"/>
+ </g>
+ <g fill="#174b38">
+  <path d="M250 298 Q246 232 253 185 Q236 159 205 143 Q233 146 257 170 Q273 134 304 118 Q284 151 270 185 Q300 160 337 160 Q303 175 274 204 Q276 246 280 298Z"/>
+  <path d="M251 185 Q206 154 170 174 Q186 140 231 147 Q199 111 222 94 Q248 114 257 151 Q273 104 311 96 Q307 129 278 157 Q327 129 359 154 Q328 176 282 177Z"/>
+ </g>
+ <path d="M256 293 Q260 230 258 177" fill="none" stroke="#9a5b2c" stroke-width="18" stroke-linecap="round"/>
+ <path d="M256 225 Q226 193 199 184 M258 214 Q289 185 323 177 M258 185 Q244 158 231 143" fill="none" stroke="#9a5b2c" stroke-width="10" stroke-linecap="round"/>
+ <path d="M70 400 Q154 367 256 396 T442 388" fill="none" stroke="#e4c36c" stroke-width="8"/>
+ <g stroke="#8e542b" stroke-width="8" stroke-linecap="round" fill="none">
+  <path d="M100 390 L202 356 L243 379"/><path d="M412 390 L310 356 L269 379"/>
+ </g>
+ <path d="M191 370 L241 386 Q256 394 270 386 L322 370 Q332 365 325 380 L284 410 Q257 429 231 410 L187 383 Q180 376 191 370Z" fill="#b86d37" stroke="#70401f" stroke-width="5"/>
+ <path d="M231 382 L255 396 L278 382 M246 393 L265 407" stroke="#f0c17b" stroke-width="5" fill="none" stroke-linecap="round"/>
+</g>
+<path d="M93 102 Q256 25 419 102" fill="none" stroke="url(#gold)" stroke-width="3"/>
+<text x="256" y="62" fill="#ffe5a0" font-family="Arial,sans-serif" font-size="22" font-weight="800" text-anchor="middle" letter-spacing="1">TORRO BAH VDC</text>
+<path d="M95 433 Q256 490 417 433" fill="none" stroke="url(#gold)" stroke-width="5"/>
+<text x="256" y="463" fill="#ffe5a0" font-family="Arial,sans-serif" font-size="18" font-weight="800" text-anchor="middle" letter-spacing="1">DENTAL NGAM BAMTAARE</text>
+<g fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"><path d="M56 186 Q38 245 58 301 M456 186 Q474 245 454 301"/><path d="M48 213 l19 -10 M45 244 l22 -2 M49 275 l18 8 M464 213 l-19 -10 M467 244 l-22 -2 M463 275 l-18 8"/></g>
+</svg>
