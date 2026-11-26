@@ -184,3 +184,8 @@ height:55px
 #financeDecisionMessage{overflow-wrap:anywhere}
 #financeDecisionDialog .button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 #financeDecisionDialog button:disabled{opacity:.6;cursor:wait}
+
+/* Torro Bah VDC identity */
+.brandmark-image{object-fit:cover;padding:0;border:1px solid #d6a642}
+.login-card .brandmark-image{width:112px;height:112px;border-radius:24px}
+.identity-mark-image{object-fit:cover;padding:0;border:2px solid #d6a642}
