@@ -1,4 +1,4 @@
-*{box-sizing:border-box} :root{--green:#174b38;--green2:#23664c;--ink:#17251f;--muted:#68766f;--line:#dce5df;--paper:#fff;--bg:#f3f6f3;--soft:#eaf2ed;--amber:#fff4dc}
+*{box-sizing:border-box} :root{--vdc-primary:#176b45;--vdc-primary-dark:#104b34;--vdc-accent:#c83232;--vdc-background:#f5f7f2;--vdc-watermark-image:url('assets/torro-bah-vdc-icon.svg');--green:var(--vdc-primary);--green2:var(--vdc-primary-dark);--ink:#24332b;--muted:#718078;--line:#e1e8e1;--paper:#fff;--bg:var(--vdc-background);--soft:#edf3ee;--amber:#fff4dc}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 .topbar{background:var(--green);color:#fff;display:flex;align-items:center;gap:12px;padding:13px max(16px,calc((100vw - 900px)/2));position:sticky;top:0;z-index:5;box-shadow:0 2px 8px #102c2022}
 .brandmark{width:42px;height:42px;border:1px solid #ffffff88;border-radius:12px;display:grid;place-items:center;font-weight:800;letter-spacing:1px}
@@ -189,3 +189,49 @@ height:55px
 .brandmark-image{object-fit:cover;padding:0;border:1px solid #d6a642}
 .login-card .brandmark-image{width:112px;height:112px;border-radius:24px}
 .identity-mark-image{object-fit:cover;padding:0;border:2px solid #d6a642}
+
+
+/* Refined institutional dashboard identity.
+   Tenant-ready tokens: load each VDC's approved branding into these variables
+   from its own VDC profile when multi-VDC branding profiles are connected. */
+body::before{
+  content:"";
+  position:fixed;
+  inset:12% 0 0;
+  z-index:0;
+  pointer-events:none;
+  background-image:var(--vdc-watermark-image);
+  background-repeat:no-repeat;
+  background-position:center 62%;
+  background-size:min(68vw,520px);
+  opacity:.035;
+}
+body>*{position:relative;z-index:1}
+.topbar{
+  background:var(--vdc-primary-dark);
+  box-shadow:0 3px 14px #102c201c;
+}
+.dashboard-identity{
+  background:linear-gradient(120deg,#edf4ee 0%,#fbfaf4 100%);
+  border-color:#dfe8df;
+  box-shadow:0 4px 16px #173d2a0a;
+}
+.panel,.stat,.quick-card,.record-card{
+  box-shadow:0 3px 14px #173d2a08;
+}
+.quick-card{
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.quick-card:active{
+  transform:scale(.985);
+}
+.quick-card:focus-visible,.tab:focus-visible,button:focus-visible{
+  outline:3px solid #c8323266;
+  outline-offset:2px;
+}
+.primary,.tab.active{background:var(--vdc-primary-dark);border-color:var(--vdc-primary-dark)}
+.primary:hover,.tab.active:hover{filter:brightness(1.08)}
+.quick-icon{background:#edf4ee;color:var(--vdc-primary-dark)}
+@media(prefers-reduced-motion:reduce){
+  .quick-card{transition:none}
+}
