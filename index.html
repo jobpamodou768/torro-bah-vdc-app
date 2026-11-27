@@ -157,6 +157,7 @@
 
       <hr>
       <h3>Financial transactions</h3>
+      <div id="financialTransactionEntryPanel" hidden>
       <p class="hint">Record VDC income, expenditure and transfers. A transaction is first saved as a draft; it does not change an account balance until it completes the approval and posting workflow.</p>
       <div id="transactionMessage" class="notice" role="status">Loading transaction accounts...</div>
       <form id="financialTransactionForm" class="record-form">
@@ -203,6 +204,7 @@
         <div class="form-actions"><button type="submit" id="saveFinancialTransactionBtn" class="primary">Save transaction draft</button></div>
         <p class="hint">Saving a draft does not submit it for verification, approve it, or post it to the ledger.</p>
       </form>
+      </div>
       <h3>Financial transaction register</h3>
       <div id="financialTransactionsList" class="records-list"></div>
 
