@@ -460,7 +460,7 @@ async function loadTransactionAccounts() {
     return;
   }
   const [cash, bank] = await Promise.all([
-    supabaseClient.from("vdc_cashbooks").select("id,cashbook_name,currency,is_active").eq("vdc_id", currentVdcId).eq("is_active", true).order("cashbook_name"),
+    supabaseClient.from("vdc_cashbooks").select("id,cashbook_name,is_active").eq("vdc_id", currentVdcId).eq("is_active", true).order("cashbook_name"),
     supabaseClient.from("vdc_bank_accounts").select("id,account_name,bank_name,currency,is_active").eq("vdc_id", currentVdcId).eq("is_active", true).order("account_name")
   ]);
   if (cash.error || bank.error) {
