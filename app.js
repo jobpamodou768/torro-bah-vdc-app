@@ -288,6 +288,7 @@ async function initializeFinancePanel() {
   const transactionControls = transactionForm.querySelectorAll("input, select, textarea, button");
   transactionControls.forEach(control => { control.disabled = true; });
   canManageFinancialTransactions = false;
+  $("#financialTransactionEntryPanel").hidden = true;
 
   if (currentVdcId) {
     const { data: canManage, error: permissionError } = await supabaseClient.rpc(
@@ -295,6 +296,7 @@ async function initializeFinancePanel() {
       { requested_permission: "manage_finances" }
     );
     canManageFinancialTransactions = !permissionError && canManage === true;
+    $("#financialTransactionEntryPanel").hidden = !canManageFinancialTransactions;
     if (canManageFinancialTransactions) {
       transactionControls.forEach(control => { control.disabled = false; });
       $("#transactionMessage").textContent = "Checking available VDC accounts...";
