@@ -302,7 +302,7 @@ async function initializeFinancePanel() {
       $("#transactionMessage").textContent = "Your account does not have permission to create financial transaction drafts.";
     }
     await loadFinanceRequests();
-    await loadTransactionAccounts();
+    if (canManageFinancialTransactions) await loadTransactionAccounts();
     await loadFinancialTransactions();
   } else {
     $("#transactionMessage").textContent = "Your VDC could not be identified. Transaction entry is unavailable.";
