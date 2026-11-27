@@ -67,6 +67,7 @@ let currentRecordId = null;
 let deferredInstall = null;
 let currentUser = null;
 let currentVdcId = null;
+let canManageFinancialTransactions = false;
 
 function loadRecords(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch{return []}}
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(records));updateCounts()}
@@ -282,7 +283,30 @@ async function initializeFinancePanel() {
   $("#financeMessage").textContent = currentVdcId
     ? "Loading finance records..."
     : "Your VDC could not be identified. Finance access is unavailable.";
-  if (currentVdcId) { await loadFinanceRequests(); await loadTransactionAccounts(); await loadFinancialTransactions(); }
+
+  const transactionForm = $("#financialTransactionForm");
+  const transactionControls = transactionForm.querySelectorAll("input, select, textarea, button");
+  transactionControls.forEach(control => { control.disabled = true; });
+  canManageFinancialTransactions = false;
+
+  if (currentVdcId) {
+    const { data: canManage, error: permissionError } = await supabaseClient.rpc(
+      "has_permission",
+      { requested_permission: "manage_finances" }
+    );
+    canManageFinancialTransactions = !permissionError && canManage === true;
+    if (canManageFinancialTransactions) {
+      transactionControls.forEach(control => { control.disabled = false; });
+      $("#transactionMessage").textContent = "Checking available VDC accounts...";
+    } else {
+      $("#transactionMessage").textContent = "Your account does not have permission to create financial transaction drafts.";
+    }
+    await loadFinanceRequests();
+    await loadTransactionAccounts();
+    await loadFinancialTransactions();
+  } else {
+    $("#transactionMessage").textContent = "Your VDC could not be identified. Transaction entry is unavailable.";
+  }
   $("#transactionDate").value = new Date().toISOString().slice(0,10);
   updateTransactionTypeFields();
 }
@@ -519,6 +543,21 @@ $("#financialTransactionForm").addEventListener("submit", async event => {
     message.textContent = "Your login or VDC membership is not ready. Please sign in again.";
     return;
   }
+  if (!canManageFinancialTransactions) {
+    message.textContent = "Your account does not have permission to create financial transaction drafts.";
+    return;
+  }
+  const description = $("#transactionDescription").value.trim();
+  if (!description) {
+    message.textContent = "Enter a description or purpose before saving.";
+    $("#transactionDescription").focus();
+    return;
+  }
+  if (!$("#transactionDate").value) {
+    message.textContent = "Select the transaction date before saving.";
+    $("#transactionDate").focus();
+    return;
+  }
   const type = $("#transactionType").value;
   const accountType = $("#transactionAccountType").value;
   const sourceId = $("#transactionSourceAccount").value;
@@ -551,10 +590,8 @@ $("#financialTransactionForm").addEventListener("submit", async event => {
     amount,
     currency: "GMD",
     transaction_date: $("#transactionDate").value,
-    description: $("#transactionDescription").value.trim(),
-    reference_number: $("#transactionReference").value.trim() || null,
-    status: "draft",
-    created_by: currentUser.id
+    description,
+    reference_number: $("#transactionReference").value.trim() || null
   };
   const { error } = await supabaseClient.from("financial_transactions").insert(payload);
   button.disabled = false;
