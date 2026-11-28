@@ -67,6 +67,7 @@ let currentRecordId = null;
 let deferredInstall = null;
 let currentUser = null;
 let currentVdcId = null;
+let canManageFinancialTransactions = false;
 
 function loadRecords(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch{return []}}
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(records));updateCounts()}
@@ -282,7 +283,34 @@ async function initializeFinancePanel() {
   $("#financeMessage").textContent = currentVdcId
     ? "Loading finance records..."
     : "Your VDC could not be identified. Finance access is unavailable.";
-  if (currentVdcId) await loadFinanceRequests();
+
+  const transactionForm = $("#financialTransactionForm");
+  const transactionControls = transactionForm.querySelectorAll("input, select, textarea, button");
+  transactionControls.forEach(control => { control.disabled = true; });
+  canManageFinancialTransactions = false;
+  $("#financialTransactionEntryPanel").hidden = true;
+
+  if (currentVdcId) {
+    const { data: canManage, error: permissionError } = await supabaseClient.rpc(
+      "has_permission",
+      { requested_permission: "manage_finances" }
+    );
+    canManageFinancialTransactions = !permissionError && canManage === true;
+    $("#financialTransactionEntryPanel").hidden = !canManageFinancialTransactions;
+    if (canManageFinancialTransactions) {
+      transactionControls.forEach(control => { control.disabled = false; });
+      $("#transactionMessage").textContent = "Checking available VDC accounts...";
+    } else {
+      $("#transactionMessage").textContent = "Your account does not have permission to create financial transaction drafts.";
+    }
+    await loadFinanceRequests();
+    if (canManageFinancialTransactions) await loadTransactionAccounts();
+    await loadFinancialTransactions();
+  } else {
+    $("#transactionMessage").textContent = "Your VDC could not be identified. Transaction entry is unavailable.";
+  }
+  $("#transactionDate").value = new Date().toISOString().slice(0,10);
+  updateTransactionTypeFields();
 }
 
 async function loadFinanceRequests() {
@@ -431,6 +459,155 @@ $("#paymentRequestForm").addEventListener("submit", async event => {
   $("#paymentRequestForm").reset();
   $("#financeMessage").textContent = "Payment request submitted for verification.";
   await loadFinanceRequests();
+});
+
+// FINANCIAL TRANSACTIONS — draft entry and register
+let transactionAccounts = { cashbook: [], bank: [] };
+
+function selectedTransactionAccount(type, id) {
+  return transactionAccounts[type].find(account => account.id === id);
+}
+
+function renderTransactionAccountOptions(selectId, type, selectedId = "") {
+  const select = $(selectId);
+  const rows = transactionAccounts[type] || [];
+  select.innerHTML = '<option value="">Select account</option>' + rows.map(account => {
+    const label = type === "bank"
+      ? [account.account_name, account.bank_name].filter(Boolean).join(" — ")
+      : account.cashbook_name;
+    return `<option value="${escapeHtml(account.id)}" ${account.id === selectedId ? "selected" : ""}>${escapeHtml(label)} (${escapeHtml(account.currency || "GMD")})</option>`;
+  }).join("");
+}
+
+async function loadTransactionAccounts() {
+  const message = $("#transactionMessage");
+  if (!currentVdcId) {
+    message.textContent = "Your VDC could not be identified. Transaction accounts are unavailable.";
+    return;
+  }
+  const [cash, bank] = await Promise.all([
+    supabaseClient.from("vdc_cashbooks").select("id,cashbook_name,is_active").eq("vdc_id", currentVdcId).eq("is_active", true).order("cashbook_name"),
+    supabaseClient.from("vdc_bank_accounts").select("id,account_name,bank_name,currency,is_active").eq("vdc_id", currentVdcId).eq("is_active", true).order("account_name")
+  ]);
+  if (cash.error || bank.error) {
+    message.textContent = "Could not load VDC accounts. Check the account access policies.";
+    return;
+  }
+  transactionAccounts = { cashbook: cash.data || [], bank: bank.data || [] };
+  renderTransactionAccountOptions("#transactionSourceAccount", $("#transactionAccountType").value);
+  renderTransactionAccountOptions("#transactionDestinationAccount", $("#transactionDestinationType").value);
+  message.textContent = "Accounts loaded. Choose the correct source account before saving a draft.";
+}
+
+function updateTransactionAccountFields() {
+  renderTransactionAccountOptions("#transactionSourceAccount", $("#transactionAccountType").value);
+  renderTransactionAccountOptions("#transactionDestinationAccount", $("#transactionDestinationType").value);
+}
+function updateTransactionTypeFields() {
+  const isTransfer = $("#transactionType").value === "transfer";
+  $("#transactionDestinationTypeField").hidden = !isTransfer;
+  $("#transactionDestinationField").hidden = !isTransfer;
+  $("#transactionDestinationType").required = isTransfer;
+  $("#transactionDestinationAccount").required = isTransfer;
+}
+
+async function loadFinancialTransactions() {
+  const list = $("#financialTransactionsList");
+  if (!currentVdcId) { list.innerHTML = ""; return; }
+  const { data, error } = await supabaseClient
+    .from("financial_transactions")
+    .select("id,transaction_type,account_type,amount,currency,transaction_date,description,reference_number,status,created_at")
+    .eq("vdc_id", currentVdcId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    list.innerHTML = '<p class="hint">Transactions are not visible to this account. Check finance permissions and database policies.</p>';
+    return;
+  }
+  list.innerHTML = data?.length ? data.map(row => `
+    <article class="record-card finance-card">
+      <div class="meta">
+        <strong>${escapeHtml(row.description)}</strong>
+        <small>${escapeHtml(row.transaction_type)} • GMD ${Number(row.amount).toLocaleString()} • ${escapeHtml(row.transaction_date || "—")}</small>
+        <small>Status: ${escapeHtml(String(row.status || "").replace(/_/g, " "))}${row.reference_number ? " • Ref: " + escapeHtml(row.reference_number) : ""}</small>
+      </div>
+    </article>`).join("") : '<p class="hint">No financial transactions recorded yet.</p>';
+}
+
+$("#transactionAccountType").addEventListener("change", updateTransactionAccountFields);
+$("#transactionDestinationType").addEventListener("change", updateTransactionAccountFields);
+$("#transactionType").addEventListener("change", updateTransactionTypeFields);
+$("#financialTransactionForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const message = $("#transactionMessage");
+  const button = $("#saveFinancialTransactionBtn");
+  if (!currentUser || !currentVdcId) {
+    message.textContent = "Your login or VDC membership is not ready. Please sign in again.";
+    return;
+  }
+  if (!canManageFinancialTransactions) {
+    message.textContent = "Your account does not have permission to create financial transaction drafts.";
+    return;
+  }
+  const description = $("#transactionDescription").value.trim();
+  if (!description) {
+    message.textContent = "Enter a description or purpose before saving.";
+    $("#transactionDescription").focus();
+    return;
+  }
+  if (!$("#transactionDate").value) {
+    message.textContent = "Select the transaction date before saving.";
+    $("#transactionDate").focus();
+    return;
+  }
+  const type = $("#transactionType").value;
+  const accountType = $("#transactionAccountType").value;
+  const sourceId = $("#transactionSourceAccount").value;
+  const source = selectedTransactionAccount(accountType, sourceId);
+  const destinationType = $("#transactionDestinationType").value;
+  const destinationId = $("#transactionDestinationAccount").value;
+  const destination = type === "transfer" ? selectedTransactionAccount(destinationType, destinationId) : null;
+  if (!source) { message.textContent = "Select a valid active source account."; return; }
+  if (type === "transfer" && (!destination || (accountType === destinationType && sourceId === destinationId))) {
+    message.textContent = "Select a different valid destination account.";
+    return;
+  }
+  const amount = Number($("#transactionAmount").value);
+  if (!Number.isFinite(amount) || amount <= 0) { message.textContent = "Enter an amount greater than zero."; return; }
+  if ((source.currency || "GMD") !== "GMD" || (destination && (destination.currency || "GMD") !== "GMD")) {
+    message.textContent = "This workflow currently accepts GMD accounts only.";
+    return;
+  }
+  button.disabled = true;
+  button.textContent = "Saving draft...";
+  const payload = {
+    vdc_id: currentVdcId,
+    transaction_type: type,
+    account_type: accountType,
+    bank_account_id: accountType === "bank" ? sourceId : null,
+    cashbook_id: accountType === "cashbook" ? sourceId : null,
+    destination_account_type: type === "transfer" ? destinationType : null,
+    destination_bank_account_id: type === "transfer" && destinationType === "bank" ? destinationId : null,
+    destination_cashbook_id: type === "transfer" && destinationType === "cashbook" ? destinationId : null,
+    amount,
+    currency: "GMD",
+    transaction_date: $("#transactionDate").value,
+    description,
+    reference_number: $("#transactionReference").value.trim() || null
+  };
+  const { error } = await supabaseClient.from("financial_transactions").insert(payload);
+  button.disabled = false;
+  button.textContent = "Save transaction draft";
+  if (error) {
+    message.textContent = "Draft was not saved: " + error.message;
+    return;
+  }
+  $("#financialTransactionForm").reset();
+  $("#transactionDate").value = new Date().toISOString().slice(0,10);
+  updateTransactionTypeFields();
+  updateTransactionAccountFields();
+  message.textContent = "Transaction draft saved. It has not been submitted, approved or posted.";
+  await loadFinancialTransactions();
 });
 
 let pendingFinanceDecision = null;
